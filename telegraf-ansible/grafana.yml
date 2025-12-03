@@ -1,0 +1,44 @@
+---
+- name: Установка и настройка Grafana
+  hosts: monitoring_servers
+  become: yes
+  vars_files:
+    - vars/main.yml
+  vars:
+    grafana_version: "12.3.0"
+
+  tasks:
+    - name: копирование пакета Графаны во временную локацию
+      copy:
+        src: "/home/tensor/Загрузки/grafana-enterprise_12.3.0_19497075765_linux_amd64.rpm"
+        dest: "/tmp/grafana.rpm"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Установка Grafana из локального RPM
+      yum:
+        name: /tmp/grafana.rpm
+        state: present
+        disable_gpg_check: yes
+        disablerepo: "grafana"
+
+    - name: Настройка конфига Grafana
+      template:
+        src: templates/prometheus.yml.j2 
+        dest: /etc/grafana/grafana.ini
+        owner: prometheus
+        group: prometheus
+        mode: 0644
+
+    - name: Запуск Grafana
+      systemd:
+        name: grafana-server
+        enabled: yes
+        state: started
+
+    - name: Ждём запуска Grafana
+      wait_for:
+        port: 3000
+        delay: 10
+        timeout: 30

@@ -1,0 +1,42 @@
+[agent]
+	interval = "{{ telegraf_agent.interval }}"
+	round_interval = {{ telegraf_agent.round_interval  }}
+	metric_batch_size = {{  telegraf_agent.metric_batch_size }}
+	metric_buffer_limit = {{  telegraf_agent.metric_buffer_limit }}
+	collection_jitter =  "{{ telegraf_agent.collection_jitter }}"
+	flush_interval = "{{ telegraf_agent.flush_interval }}"
+	precision = "{{ telegraf_agent.precision }}"
+	debug = {{ telegraf_agent.debug }}
+	quiet = {{ telegraf_agent.quiet }}
+	logfile = "{{ telegraf_agent.logfile }}"
+	hostname = "{{ telegraf_agent.hostname }}"
+	omit_hostname = {{ telegraf_agent.omit_hostname }}
+	
+{% if telegraf_outputs.influxdb is defined %}
+{% for output in telegraf_outputs.influxdb  %}
+[[outputs.influxdb]]
+	urls = {{ output.urls }}
+	database = "{{ output.database }}"
+	retention_policy = "{{ output.retention_policy }}"
+	timeout = "{{  output.timeout }}"
+	username = "{{ output.username }}"
+	password = "{{ output.password }}"
+{% endfor  %}
+{% endif %}
+
+{% if telegraf_outputs.prometheus_client is defined %}
+{% for output in telegraf_outputs.prometheus_client %}
+[[outputs.prometheus_client]]
+	listen = "{{ output.listen }}"
+	path = "{{ output.path }}"
+	expiration_interval = "{{ output.expiration_interval }}"
+{% endfor %}
+{% endif %}
+
+#{% if telegraf_outputs.file is defined %}
+#{% for output in telegraf_outputs.file %}
+#[[outputs.file]]
+#	files = {{ output.files }}
+#	data_format = "{{ output.data_format }}"
+#{% endfor %}
+#{% endif %}

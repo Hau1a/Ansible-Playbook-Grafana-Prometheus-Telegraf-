@@ -1,0 +1,99 @@
+---
+- name: Установка и настройка Telegraf 
+  hosts: prometheus_targets
+  become: yes
+  vars_files:
+    - vars/main.yml
+    
+  tasks:
+    - name: Добавление GPG ключа InfluxDB
+      rpm_key:
+        key: https://repos.influxdata.com/influxdata-archive_compat.key
+        state: present
+
+
+
+    - name: Добавление репозитория InfluxDB
+      yum_repository:
+        name: influxdb
+        description: IndluxDB repository
+        baseurl: https://repos.influxdata.com/rhel/{{ ansible_distribution_major_version }}/$basearch/stable
+        gpgkey: https://repos.influxdata.com/influxdata-archive_compat.key
+        gpgcheck: yes
+        enabled: yes
+
+
+    - name: Установка Telegraf
+      dnf:
+        name: telegraf
+        state: present
+        update_cache: yes
+
+    - name: Создание директории для конфигов
+      file:
+        path: /etc/telegraf/telegraf.d
+        state: directory
+        owner: telegraf
+        group: telegraf
+        mode: 0755
+
+    - name: Настройка основного конфига
+      template:
+        src: templates/telegraf.conf.j2
+        dest: /etc/telegraf/telegraf.conf
+        owner: telegraf
+        group: telegraf
+        mode: 0644
+      notify: restart telegraf
+
+    - name: Настройка конфигурации системных метрик
+      copy:
+        content: |
+          [[inputs.cpu]]
+            percpu = true
+            totalcpu = true
+            collect_cpu_time = false
+            report_active = false
+
+          [[inputs.disk]]
+           ignore_fs=["tmpfs","devtmpfs","devfs"]
+
+          [[inputs.mem]]
+
+          [[inputs.system]]
+
+          [[inputs.net]]
+
+          [[inputs.kernel]]
+
+          [[inputs.processes]]
+        dest: /etc/telegraf/telegraf.d/system.conf
+        owner: telegraf
+        group: telegraf
+        mode: 0644
+      notify: restart telegraf
+
+    - name: Настройка сервиса Telegraf
+      systemd:
+        name: telegraf
+        enabled: yes
+        state: started
+        daemon_reload: yes
+
+    - name: Проверка статуса Telegraf
+      command: systemctl status telegraf
+      register: telegraf_status
+      changed_when: false
+
+    - name: ВЫвод статуса Telegraf
+      debug:
+        var: telegraf_status.stdout_lines
+
+  handlers:
+    - name: restart telegraf
+      systemd:
+        name: telegraf
+        state: restarted
+        daemon_reload: yes
+      
+
