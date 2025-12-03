@@ -10,7 +10,9 @@
   tasks:
     - name: копирование пакета Графаны во временную локацию
       copy:
-        src: "/home/tensor/Загрузки/grafana-enterprise_12.3.0_19497075765_linux_amd64.rpm"
+        src: "/home/tensor/Загрузки/grafana-enterprise_12.3.0_19497075765_linux_amd64.rpm" #Here you need to enter the location where the rpm archive with Grafana is located. 
+                                                                                          #Unfortunately, due to problems with the region, it was not possible to add automatic 
+                                                                                          #loading of the repository and gpg key.
         dest: "/tmp/grafana.rpm"
         owner: root
         group: root
